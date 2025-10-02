@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ripartizione tra agenti (minima)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Ripartizione proporzionale tra agenti</h1>
+  <p>Distribuisci la <strong>quantità</strong> (unità) e l'<strong>importo</strong> (€) in base al <em>saldo</em> di ciascun agente.</p>
+
+  <h2>1) Totali</h2>
+  <div>
+    <label for="totalQty">Quantità totale (unità)</label>
+    <input id="totalQty" type="number" min="0" step="1" value="100">
+    &nbsp;&nbsp;
+    <label for="totalAmount">Importo totale (€)</label>
+    <input id="totalAmount" type="number" min="0" step="0.01" value="1234.56">
+  </div>
+
+  <h2>2) Agenti (il saldo è il peso)</h2>
+  <div>
+    <button id="addAgentBtn">+ Aggiungi agente</button>
+    <button id="resetSampleBtn">Ripristina esempio</button>
+  </div>
+  <table id="agentsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Cognome</th>
+        <th>Saldo</th>
+        <th>Azione</th>
+      </tr>
+    </thead>
+    <tbody id="agentsTbody"></tbody>
+  </table>
+
+  <h2>3) Risultato</h2>
+  <div>
+    <button id="calcBtn">Calcola</button>
+    <button id="clearResultBtn">Pulisci risultati</button>
+  </div>
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Cognome</th>
+        <th>Saldo</th>
+        <th>Quantità</th>
+        <th>Importo (€)</th>
+      </tr>
+    </thead>
+    <tbody id="resultTbody"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" style="text-align:right;"><strong>Totale:</strong></td>
+        <td id="sumQty">0</td>
+        <td id="sumAmount">0,00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <details>
+    <summary>Come funziona (metodo dei maggiori resti)</summary>
+    <ol>
+      <li>La quota = saldo / somma saldi (se tutti 0 → parti uguali).</li>
+      <li>Calcoliamo quote teoriche, prendiamo il floor.</li>
+      <li>Assegniamo i rimanenti ai maggiori resti, finché la somma torna.</li>
+    </ol>
+  </details>
+
+  <script src="app.js"></script>
+</body>
+</html>
