@@ -1,3 +1,7 @@
+// === app.js (patch con navegación de agentes) ===
+// Compatible con la versión "minimal sin CSS" y SIN sección Dettaglio.
+// Sólo reemplaza tu app.js por este archivo.
+
 // ===== Helper DOM =====
 const byId = (id) => document.getElementById(id);
 
@@ -58,6 +62,108 @@ function allocate(agents, totalQty, totalAmountEuro) {
 // ===== UI: tabella agenti =====
 const agentsTbody = byId("agentsTbody");
 let allocations = [];
+let currentIndex = 0;
+
+// Referencias de navegación (se crearán dinámicamente si faltan)
+let prevBtn = null;
+let nextBtn = null;
+let navInfo = null;
+
+function createNavUI() {
+  // Si ya existe, sólo toma referencias y sale
+  const existingPrev = byId("prevBtn");
+  const existingNext = byId("nextBtn");
+  const existingInfo = byId("navInfo");
+  if (existingPrev && existingNext && existingInfo) {
+    prevBtn = existingPrev; nextBtn = existingNext; navInfo = existingInfo;
+    attachNavListeners();
+    return;
+  }
+
+  // Construcción mínima
+  const h3 = document.createElement("h3");
+  h3.textContent = "Navigazione agenti";
+
+  const wrap = document.createElement("div");
+  const prev = document.createElement("button");
+  prev.id = "prevBtn";
+  prev.textContent = "← Precedente";
+
+  const info = document.createElement("span");
+  info.id = "navInfo";
+  info.style.margin = "0 8px";
+
+  const next = document.createElement("button");
+  next.id = "nextBtn";
+  next.textContent = "Successivo →";
+
+  wrap.appendChild(prev);
+  wrap.appendChild(info);
+  wrap.appendChild(next);
+
+  // Insertar después de la tabla de resultados y antes de <details> si existe
+  const resultTable = byId("resultTable");
+  const details = document.querySelector("details");
+  if (resultTable && resultTable.parentNode) {
+    if (details && details.parentNode === resultTable.parentNode) {
+      resultTable.parentNode.insertBefore(h3, details);
+      resultTable.parentNode.insertBefore(wrap, details);
+    } else {
+      resultTable.parentNode.insertBefore(h3, resultTable.nextSibling);
+      resultTable.parentNode.insertBefore(wrap, h3.nextSibling);
+    }
+  } else {
+    document.body.appendChild(h3);
+    document.body.appendChild(wrap);
+  }
+
+  prevBtn = byId("prevBtn");
+  nextBtn = byId("nextBtn");
+  navInfo = byId("navInfo");
+
+  attachNavListeners();
+  selectAgent(0);
+}
+
+function attachNavListeners() {
+  if (prevBtn && !prevBtn._listenerAdded) {
+    prevBtn.addEventListener("click", () => selectAgent(currentIndex - 1));
+    prevBtn._listenerAdded = true;
+  }
+  if (nextBtn && !nextBtn._listenerAdded) {
+    nextBtn.addEventListener("click", () => selectAgent(currentIndex + 1));
+    nextBtn._listenerAdded = true;
+  }
+}
+
+function updateNavButtons(count) {
+  if (!prevBtn || !nextBtn) return;
+  prevBtn.disabled = (count === 0 || currentIndex === 0);
+  nextBtn.disabled = (count === 0 || currentIndex >= count - 1);
+}
+
+function selectAgent(idx) {
+  if (!prevBtn || !nextBtn || !navInfo) createNavUI();
+
+  const data = readAgents();
+  if (data.length === 0) {
+    currentIndex = 0;
+    navInfo.textContent = "Nessun agente.";
+    updateNavButtons(0);
+    return;
+  }
+  currentIndex = Math.max(0, Math.min(idx, data.length - 1));
+  const a = data[currentIndex];
+  navInfo.textContent = `Agente ${currentIndex + 1}/${data.length}: ${(a.nome || "Agente")} ${(a.cognome || "")} | Saldo: ${formatEuroIT(a.saldo)}`;
+  updateNavButtons(data.length);
+
+  const row = agentsTbody.querySelectorAll('tr')[currentIndex];
+  if (row) {
+    row.scrollIntoView({ block: 'nearest' });
+    const first = row.querySelector('input');
+    if (first) first.focus();
+  }
+}
 
 function renderAgentRow(idx, agent) {
   const tr = document.createElement("tr");
@@ -74,6 +180,7 @@ function renderAgentRow(idx, agent) {
   tr.querySelector('[data-act="del"]').addEventListener('click', () => {
     tr.remove();
     renumberRows();
+    selectAgent(Math.min(currentIndex, agentsTbody.children.length - 1));
   });
 
   agentsTbody.appendChild(tr);
@@ -127,16 +234,19 @@ function renderResultTable(result) {
 // ===== Eventi =====
 byId("addAgentBtn").addEventListener("click", () => {
   addAgentRow();
+  selectAgent(agentsTbody.children.length - 1);
 });
 byId("resetSampleBtn").addEventListener("click", () => {
   agentsTbody.innerHTML = "";
   sampleAgents().forEach(a => addAgentRow(a));
   allocations = [];
   renderResultTable([]);
+  selectAgent(0);
 });
 byId("clearResultBtn").addEventListener("click", () => {
   allocations = [];
   renderResultTable([]);
+  selectAgent(currentIndex);
 });
 
 byId("calcBtn").addEventListener("click", () => {
@@ -161,6 +271,7 @@ byId("calcBtn").addEventListener("click", () => {
   try {
     allocations = allocate(agents, totalQty, Number(totalAmount));
     renderResultTable(allocations);
+    selectAgent(0);
   } catch (e) {
     console.error(e);
     alert(e.message || "Errore nel calcolo della ripartizione.");
@@ -177,7 +288,16 @@ function sampleAgents() {
   ];
 }
 
-// Init
-(function init() {
-  sampleAgents().forEach(a => addAgentRow(a));
-})();
+// Init seguro
+function init() {
+  createNavUI();
+  if (agentsTbody && agentsTbody.children.length === 0) {
+    sampleAgents().forEach(a => addAgentRow(a));
+  }
+  selectAgent(0);
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
