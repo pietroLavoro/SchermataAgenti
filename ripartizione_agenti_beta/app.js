@@ -1,6 +1,5 @@
-// === app.js (patch con navegación de agentes) ===
-// Compatible con la versión "minimal sin CSS" y SIN sección Dettaglio.
-// Sólo reemplaza tu app.js por este archivo.
+// === app.js (patch con navegación de agentes en TABLA) ===
+// Compatible con tu versión “beta”: SOLO modifica la sección 4 de navegación.
 
 // ===== Helper DOM =====
 const byId = (id) => document.getElementById(id);
@@ -64,65 +63,107 @@ const agentsTbody = byId("agentsTbody");
 let allocations = [];
 let currentIndex = 0;
 
-// Referencias de navegación (se crearán dinámicamente si faltan)
+// ======== SECCIÓN 4) NAVEGAZIONE AGENTI — TABLA + BOTONES DEBAJO =========
 let prevBtn = null;
 let nextBtn = null;
+// navInfo se mantiene por compatibilidad, no se usa visualmente
 let navInfo = null;
 
+// refs de la tabla de navegación
+let navTable = null;
+let navNomeEl = null;
+let navQtyEl = null;
+let navImpEl = null;
+
 function createNavUI() {
-  // Si ya existe, sólo toma referencias y sale
+  // Si ya existe, sólo tomar referencias
   const existingPrev = byId("prevBtn");
   const existingNext = byId("nextBtn");
-  const existingInfo = byId("navInfo");
-  if (existingPrev && existingNext && existingInfo) {
-    prevBtn = existingPrev; nextBtn = existingNext; navInfo = existingInfo;
+  const existingTable = byId("navTable");
+  if (existingPrev && existingNext && existingTable) {
+    prevBtn = existingPrev;
+    nextBtn = existingNext;
+    navTable = existingTable;
+    navNomeEl = byId("navNome");
+    navQtyEl  = byId("navQty");
+    navImpEl  = byId("navImp");
     attachNavListeners();
+    updateNavView();
     return;
   }
 
-  // Construcción mínima
+  // Título "4) Navegazione Agenti"
   const h3 = document.createElement("h3");
-  h3.textContent = "Navigazione agenti";
+  h3.textContent = "4) Navegazione Agenti";
+  h3.style.fontSize = "1.50rem"
 
-  const wrap = document.createElement("div");
+  // Tabla: Agente | Azioni (Quantità) | Importo (€)
+  const table = document.createElement("table");
+  table.id = "navTable";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Agente</th>
+        <th>Azioni (Quantità)</th>
+        <th>Importo (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="navNome">—</td>
+        <td id="navQty">0</td>
+        <td id="navImp">0,00</td>
+      </tr>
+    </tbody>
+  `;
+
+  // Controles debajo
+  const controls = document.createElement("div");
+  controls.style.marginTop = "8px";
+  controls.style.display = "flex";
+  controls.style.gap = "8px";
+  controls.style.justifyContent = "center";
+
   const prev = document.createElement("button");
   prev.id = "prevBtn";
   prev.textContent = "← Precedente";
-
-  const info = document.createElement("span");
-  info.id = "navInfo";
-  info.style.margin = "0 8px";
 
   const next = document.createElement("button");
   next.id = "nextBtn";
   next.textContent = "Successivo →";
 
-  wrap.appendChild(prev);
-  wrap.appendChild(info);
-  wrap.appendChild(next);
+  controls.appendChild(prev);
+  controls.appendChild(next);
 
-  // Insertar después de la tabla de resultados y antes de <details> si existe
+  // Insertar después de la tabla de resultados y antes de <details> (si existe)
   const resultTable = byId("resultTable");
   const details = document.querySelector("details");
-  if (resultTable && resultTable.parentNode) {
-    if (details && details.parentNode === resultTable.parentNode) {
-      resultTable.parentNode.insertBefore(h3, details);
-      resultTable.parentNode.insertBefore(wrap, details);
-    } else {
-      resultTable.parentNode.insertBefore(h3, resultTable.nextSibling);
-      resultTable.parentNode.insertBefore(wrap, h3.nextSibling);
-    }
+
+  const host = (resultTable && resultTable.parentNode) ? resultTable.parentNode : document.body;
+  if (resultTable && details && details.parentNode === host) {
+    host.insertBefore(h3, details);
+    host.insertBefore(table, details);
+    host.insertBefore(controls, details);
+  } else if (resultTable) {
+    host.insertBefore(h3, resultTable.nextSibling);
+    host.insertBefore(table, h3.nextSibling);
+    host.insertBefore(controls, table.nextSibling);
   } else {
-    document.body.appendChild(h3);
-    document.body.appendChild(wrap);
+    host.appendChild(h3);
+    host.appendChild(table);
+    host.appendChild(controls);
   }
 
-  prevBtn = byId("prevBtn");
-  nextBtn = byId("nextBtn");
-  navInfo = byId("navInfo");
+  // Referencias
+  prevBtn   = byId("prevBtn");
+  nextBtn   = byId("nextBtn");
+  navTable  = byId("navTable");
+  navNomeEl = byId("navNome");
+  navQtyEl  = byId("navQty");
+  navImpEl  = byId("navImp");
 
   attachNavListeners();
-  selectAgent(0);
+  updateNavView();
 }
 
 function attachNavListeners() {
@@ -142,29 +183,57 @@ function updateNavButtons(count) {
   nextBtn.disabled = (count === 0 || currentIndex >= count - 1);
 }
 
+// Actualiza la tabla de la sección 4 con el agente actual
+function updateNavView() {
+  if (!navTable) return;
+  const agents = readAgents();
+  const hasAgents = agents.length > 0;
+  const a = hasAgents ? agents[currentIndex] : null;
+
+  // Nombre completo
+  const fullName = a ? [a.nome || "", a.cognome || ""].filter(Boolean).join(" ") : "—";
+  if (navNomeEl) navNomeEl.textContent = fullName || "—";
+
+  // Si existen allocations (ya calculaste), toma Quantità e Importo; si no, 0
+  const q = (allocations[currentIndex] && Number.isFinite(allocations[currentIndex].quantita))
+              ? allocations[currentIndex].quantita : 0;
+  const imp = (allocations[currentIndex] && Number.isFinite(allocations[currentIndex].importo))
+              ? allocations[currentIndex].importo : 0;
+
+  if (navQtyEl) navQtyEl.textContent = String(q);
+  if (navImpEl) navImpEl.textContent = formatEuroIT(imp);
+
+  updateNavButtons(agents.length);
+}
+
+// Selección integrada con la tabla de la sección 4
 function selectAgent(idx) {
-  if (!prevBtn || !nextBtn || !navInfo) createNavUI();
+  if (!prevBtn || !nextBtn || !navTable) createNavUI();
 
   const data = readAgents();
   if (data.length === 0) {
     currentIndex = 0;
-    navInfo.textContent = "Nessun agente.";
+    if (navNomeEl) navNomeEl.textContent = "—";
+    if (navQtyEl)  navQtyEl.textContent  = "0";
+    if (navImpEl)  navImpEl.textContent  = "0,00";
     updateNavButtons(0);
     return;
   }
   currentIndex = Math.max(0, Math.min(idx, data.length - 1));
-  const a = data[currentIndex];
-  navInfo.textContent = `Agente ${currentIndex + 1}/${data.length}: ${(a.nome || "Agente")} ${(a.cognome || "")} | Saldo: ${formatEuroIT(a.saldo)}`;
-  updateNavButtons(data.length);
 
+  // scroll y foco suave a la fila
   const row = agentsTbody.querySelectorAll('tr')[currentIndex];
   if (row) {
     row.scrollIntoView({ block: 'nearest' });
     const first = row.querySelector('input');
     if (first) first.focus();
   }
-}
 
+  updateNavView();
+}
+// ====================== FIN SECCIÓN 4 =======================
+
+// ===== Resto de la UI de agentes (igual que tenías) =====
 function renderAgentRow(idx, agent) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
@@ -271,7 +340,7 @@ byId("calcBtn").addEventListener("click", () => {
   try {
     allocations = allocate(agents, totalQty, Number(totalAmount));
     renderResultTable(allocations);
-    selectAgent(0);
+    selectAgent(0); // refresca la tabla de navegación con las asignaciones
   } catch (e) {
     console.error(e);
     alert(e.message || "Errore nel calcolo della ripartizione.");
