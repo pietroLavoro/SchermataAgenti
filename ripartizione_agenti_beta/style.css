@@ -1,7 +1,7 @@
 /* Stile minimale */
 html,
 body {
-  margin: 12px;
+  margin: 20px;
   font-family: system-ui, Arial, sans-serif;
   font-size: 16px;
 }
@@ -29,4 +29,23 @@ button {
 }
 .titolo > * { 
   margin: 0;           /* opcional: quita márgenes extra */
+}
+
+
+/* --- i18n topbar --- */
+.topbar{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 8px;
+}
+.lang-switch{
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e3ea;
+  background: #ffffff;
+  color: #1b1f23;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
 }

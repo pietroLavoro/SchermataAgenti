@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div class="topbar"><button id="langBtn" class="lang-switch">ES</button></div>
     <div class="titolo">
-      <h1>Ripartizione proporzionale tra agenti</h1>
+      <h1 data-i18n="title">Ripartizione proporzionale tra agenti</h1>
       <br>
       <p>
         Distribuisci la <strong>quantità</strong> (unità) e l'<strong
@@ -18,12 +19,12 @@
       </p>
     </div>
     
-    <h2>1) Totali</h2>
+    <h2 data-i18n="section_totals">1) Totali</h2>
     <div>
-      <label for="totalQty">Quantità totale (unità)</label>
+      <label for="totalQty" data-i18n="totals_qty">Quantità totale (unità)</label>
       <input id="totalQty" type="number" min="0" step="1" value="100" />
       &nbsp;&nbsp;
-      <label for="totalAmount">Importo totale (€)</label>
+      <label for="totalAmount" data-i18n="totals_amount">Importo totale (€)</label>
       <input
         id="totalAmount"
         type="number"
@@ -33,45 +34,45 @@
       />
     </div>
 
-    <h2>2) Agenti</h2>
+    <h2 data-i18n="section_agents">2) Agenti</h2>
     <div>
-      <button id="addAgentBtn">+ Aggiungi agente</button>
-      <button id="resetSampleBtn">Ripristina esempio</button>
+      <button id="addAgentBtn" data-i18n="add_agent">+ Aggiungi agente</button>
+      <button id="resetSampleBtn" data-i18n="reset_sample">Ripristina esempio</button>
     </div>
     <table id="agentsTable">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Nome</th>
-          <th>Cognome</th>
-          <th>Saldo</th>
-          <th>Azione</th>
+          <th data-i18n="th_hash">#</th>
+          <th data-i18n="th_nome">Nome</th>
+          <th data-i18n="th_cognome">Cognome</th>
+          <th data-i18n="th_saldo">Saldo</th>
+          <th data-i18n="th_action">Azione</th>
         </tr>
       </thead>
       <tbody id="agentsTbody"></tbody>
     </table>
 
-    <h2>3) Risultato</h2>
+    <h2 data-i18n="section_result">3) Risultato</h2>
     <div>
-      <button id="calcBtn">Calcola</button>
-      <button id="clearResultBtn">Pulisci risultati</button>
+      <button id="calcBtn" data-i18n="calc">Calcola</button>
+      <button id="clearResultBtn" data-i18n="clear_results">Pulisci risultati</button>
     </div>
     <table id="resultTable">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Nome</th>
-          <th>Cognome</th>
-          <th>Saldo</th>
-          <th>Quantità</th>
-          <th>Importo (€)</th>
+          <th data-i18n="th_hash">#</th>
+          <th data-i18n="th_nome">Nome</th>
+          <th data-i18n="th_cognome">Cognome</th>
+          <th data-i18n="th_saldo">Saldo</th>
+          <th data-i18n="th_qty">Quantità</th>
+          <th data-i18n="th_amount">Importo (€)</th>
         </tr>
       </thead>
       <tbody id="resultTbody"></tbody>
       <tfoot>
         <tr>
           <td colspan="4" style="text-align: right">
-            <strong>Totale:</strong>
+            <strong data-i18n="total_label">Totale:</strong>
           </td>
           <td id="sumQty">0</td>
           <td id="sumAmount">0,00</td>

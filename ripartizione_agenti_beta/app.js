@@ -1,3 +1,79 @@
+//
+// ===== I18N (IT/ES) =====
+const I18N = {
+  it: {
+    title: "Ripartizione proporzionale tra agenti",
+    intro_html: "Distribuisci la <strong>quantità</strong> (unità) e l'<strong>importo</strong> (€) in base al <em>saldo</em> di ciascun agente.",
+    section_totals: "1) Totali",
+    totals_qty: "Quantità totale (unità)",
+    totals_amount: "Importo totale (€)",
+    section_agents: "2) Agenti",
+    add_agent: "+ Aggiungi agente",
+    reset_sample: "Ripristina esempio",
+    th_hash: "#",
+    th_nome: "Nome",
+    th_cognome: "Cognome",
+    th_saldo: "Saldo",
+    th_action: "Azione",
+    section_result: "3) Risultato",
+    calc: "Calcola",
+    clear_results: "Pulisci risultati",
+    th_qty: "Quantità",
+    th_amount: "Importo (€)",
+    total_label: "Totale:",
+    alert_neg_saldi: "Saldi negativi non consentiti.",
+    alert_tot_neg: "I totali non possono essere negativi.",
+    alert_add_agent: "Aggiungi almeno un agente.",
+    internal_sum_error: "Le somme non tornano (errore interno)."
+  },
+  es: {
+    title: "Reparto proporcional entre agentes",
+    intro_html: "Distribuye la <strong>cantidad</strong> (unidades) y el <strong>importe</strong> (€) según el <em>saldo</em> de cada agente.",
+    section_totals: "1) Totales",
+    totals_qty: "Cantidad total (unidades)",
+    totals_amount: "Importe total (€)",
+    section_agents: "2) Agentes",
+    add_agent: "+ Añadir agente",
+    reset_sample: "Restablecer ejemplo",
+    th_hash: "#",
+    th_nome: "Nombre",
+    th_cognome: "Apellido",
+    th_saldo: "Saldo",
+    th_action: "Acción",
+    section_result: "3) Resultado",
+    calc: "Calcular",
+    clear_results: "Limpiar resultados",
+    th_qty: "Cantidad",
+    th_amount: "Importe (€)",
+    total_label: "Total:",
+    alert_neg_saldi: "Saldos negativos no permitidos.",
+    alert_tot_neg: "Los totales no pueden ser negativos.",
+    alert_add_agent: "Añade al menos un agente.",
+    internal_sum_error: "Las sumas no coinciden (error interno)."
+  }
+};
+const LANG_KEY = 'ui_lang';
+function getLang(){ const s = localStorage.getItem(LANG_KEY); return (s==='it'||s==='es')?s:'it'; }
+function tr(key){ const l=getLang(); return (I18N[l] && I18N[l][key]) || key; }
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!key) return;
+    if (key.endsWith('_html')) el.innerHTML = tr(key);
+    else el.textContent = tr(key);
+  });
+  // fuerza elementos críticos por id
+  const intro = document.getElementById('introText'); if (intro) intro.innerHTML = tr('intro_html');
+  const calc = document.getElementById('calcBtn'); if (calc) calc.textContent = tr('calc');
+  const clr  = document.getElementById('clearResultBtn'); if (clr) clr.textContent = tr('clear_results');
+}
+function setLang(l){
+  localStorage.setItem(LANG_KEY, l);
+  document.documentElement.setAttribute('lang', l);
+  const btn = document.getElementById('langBtn'); if (btn) btn.textContent = (l==='it')?'ES':'IT';
+  applyI18n();
+}
+
 // === app.js (patch con navegación de agentes en TABLA) ===
 // Compatible con tu versión “beta”: SOLO modifica la sección 4 de navegación.
 
@@ -98,24 +174,63 @@ function createNavUI() {
   h3.style.fontSize = "1.50rem"
 
   // Tabla: Agente | Azioni (Quantità) | Importo (€)
-  const table = document.createElement("table");
-  table.id = "navTable";
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Agente</th>
-        <th>Azioni (Quantità)</th>
-        <th>Importo (€)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td id="navNome">—</td>
-        <td id="navQty">0</td>
-        <td id="navImp">0,00</td>
-      </tr>
-    </tbody>
-  `;
+  // === Tabla: Agente | Azioni (Quantità) | Importo (€) con ancho fijo ===
+const table = document.createElement("table");
+table.id = "navTable";
+table.innerHTML = `
+  <colgroup>
+    <col />   <!-- Agente -->
+    <col />   <!-- Azioni (Quantità) -->
+    <col />   <!-- Importo (€) -->
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Agente</th>
+      <th>Azioni (Quantità)</th>
+      <th>Importo (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td id="navNome">—</td>
+      <td id="navQty">0</td>
+      <td id="navImp">0,00</td>
+    </tr>
+  </tbody>
+`;
+
+// === Estilos mínimos inyectados por JS (sin tocar tu CSS global) ===
+const style = document.createElement("style");
+style.textContent = `
+  /* ancho fijo para toda la tabla */
+  #navTable {
+    width: 100%;            /* <- cambia este valor si quieres otro ancho */
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  /* anchos fijos por columna (usando el colgroup de arriba) */
+  #navTable col:nth-child(1) { width: 240px; } /* Agente */
+  #navTable col:nth-child(2) { width: 140px; } /* Cantidad */
+  #navTable col:nth-child(3) { width: 140px; } /* Importe */
+
+  /* padding y alineación básica */
+  #navTable th, #navTable td {
+    padding: 6px 8px;
+  }
+  #navTable th:nth-child(2), #navTable td:nth-child(2),
+  #navTable th:nth-child(3), #navTable td:nth-child(3) {
+    text-align: right;
+  }
+
+  /* evitar que la primera columna expanda la tabla por nombres largos */
+  #navTable td:first-child, #navTable th:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+document.head.appendChild(style);
+
 
   // Controles debajo
   const controls = document.createElement("div");
@@ -359,6 +474,8 @@ function sampleAgents() {
 
 // Init seguro
 function init() {
+  setLang(getLang());
+  const langBtn = document.getElementById('langBtn'); if (langBtn) langBtn.addEventListener('click', () => setLang(getLang()==='it'?'es':'it'));
   createNavUI();
   if (agentsTbody && agentsTbody.children.length === 0) {
     sampleAgents().forEach(a => addAgentRow(a));
