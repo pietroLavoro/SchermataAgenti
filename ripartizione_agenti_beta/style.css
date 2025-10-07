@@ -23,3 +23,10 @@ button {
 button {
   cursor: pointer;
 }
+/* centra el contenido del bloque de título */
+.titolo { 
+  text-align: center; 
+}
+.titolo > * { 
+  margin: 0;           /* opcional: quita márgenes extra */
+}
